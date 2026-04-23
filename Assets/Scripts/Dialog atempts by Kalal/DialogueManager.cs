@@ -1,62 +1,73 @@
-using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
-public class DialogueManager : MonoBehaviour 
+[System.Serializable]
+public class DialogueChoice
 {
-    public GameObject dialoguePrefab;
-    public Transform container;
+    public string choiceText;
+    public int nextNodeIndex;
+}
 
-    public float moveSpeed = 200f;
-    public float spacing = 60f;
+[System.Serializable]
+public class DialogueNode
+{
+    [TextArea]
+    public string text;
 
-    private List<RectTransform> lines = new List<RectTransform>();
-    
-    void Start()
+    public DialogueChoice[] choices;
+}
+
+public class DialogueManager : MonoBehaviour
+{
+    public TextMeshProUGUI dialogueText;
+
+    public DialogueNode[] nodes;
+
+    private int currentNode = 0;
+    private bool isActive = false;
+
+    void Update()
     {
-        AddLine("Hello there.");
-        AddLine("This is a test.");
-        AddLine("It should stack upward.");
-    }
-
-    public void AddLine(string text)
-    {
-        GameObject obj = Instantiate(dialoguePrefab, container);
-        DialogueLine line = obj.GetComponent<DialogueLine>();
-        line.Init(text);
-
-        RectTransform rect = obj.GetComponent<RectTransform>();
-
-        // Start at bottom
-        rect.anchoredPosition = new Vector2(0, 0);
-
-        lines.Insert(0, rect);
-
-        UpdatePositions();
-    }
-
-    void UpdatePositions()
-    {
-        for (int i = 0; i < lines.Count; i++)
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            float targetY = i * spacing;
-            StartCoroutine(MoveTo(lines[i], targetY));
+            if (!isActive)
+            {
+                StartDialogue();
+            }
+            else
+            {
+                NextNode(0); // default choice
+            }
         }
     }
 
-    System.Collections.IEnumerator MoveTo(RectTransform rect, float targetY)
+    void StartDialogue()
     {
-        Vector2 start = rect.anchoredPosition;
-        Vector2 target = new Vector2(start.x, targetY);
+        isActive = true;
+        currentNode = 0;
+        ShowNode();
+    }
 
-        float t = 0;
-
-        while (t < 1)
+    public void NextNode(int choiceIndex)
+    {
+        if (nodes[currentNode].choices.Length == 0)
         {
-            t += Time.deltaTime * 5f;
-            rect.anchoredPosition = Vector2.Lerp(start, target, t);
-            yield return null;
+            EndDialogue();
+            return;
         }
 
-        rect.anchoredPosition = target;
+        currentNode = nodes[currentNode].choices[choiceIndex].nextNodeIndex;
+        ShowNode();
+    }
+
+    void ShowNode()
+    {
+        dialogueText.text = nodes[currentNode].text;
+    }
+
+    void EndDialogue()
+    {
+        isActive = false;
+        dialogueText.text = "";
     }
 }

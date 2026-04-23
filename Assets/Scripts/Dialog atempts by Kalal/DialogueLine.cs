@@ -14,6 +14,7 @@ public class DialogueLine : MonoBehaviour
     private float timer;
     private string fullText;
 
+
     public void Init(string content)
     {
         fullText = content;
